@@ -7,6 +7,13 @@ public class Ball : MonoBehaviour
     [SerializeField] private float whenToDestroy;
     void Update()
     {
-        Destroy(gameObject, whenToDestroy);
+        if (transform.position.y <= -10)
+        {
+            Destroy(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject,whenToDestroy);
+        }
     }
 }
