@@ -6,6 +6,7 @@ using TMPro;
 public class GameController : MonoBehaviour
 {
     private ShotUI m_shotUI;
+    private ShootingScript m_shootingScript;
 
     public GameObject[] blocks;
 
@@ -24,6 +25,8 @@ public class GameController : MonoBehaviour
     private GameObject ballContainer;
     public GameObject gameOver;
 
+    private GameObject[] balls;
+
     public TextMeshProUGUI ballsCountText;
 
     private bool firstShot;
@@ -31,6 +34,7 @@ public class GameController : MonoBehaviour
     {
         m_shotUI = GameObject.Find("CannonCanvas").GetComponent<ShotUI>();
         ballContainer = GameObject.Find("BallsContainer");
+        m_shootingScript = GameObject.Find("cannonImage").GetComponent<ShootingScript>();
     }
 
     private void Start()
@@ -46,8 +50,10 @@ public class GameController : MonoBehaviour
 
     private void Update()
     {
-        CheckIfGameOver();
+        
         CheckBlocks();
+        CheckIfGameOver();
+
 
         if (shotCount >= 2)
         {
@@ -67,26 +73,25 @@ public class GameController : MonoBehaviour
             GameObject.Find("Cannon").GetComponent<Animator>().SetBool("MoveIn", false);
         }
     }
-
-    private void SpawnNewLevel(int numberLevel1, int numberLevel2, int min, int max)
+    private void CheckBlocks()
     {
-        if (shotCount > 1)
+        blocks = GameObject.FindGameObjectsWithTag("Block");
+
+        if (blocks.Length < 1 && ballContainer.transform.childCount == 0)
         {
-            Camera.main.GetComponent<CameraTransitions>().RotateCameraToFront();
+            // RemoveBalls();
+            PlayerPrefs.SetInt("Level", PlayerPrefs.GetInt("Level") + 1);
+            SpawnLevel();
+
+            if (firstShot)
+            {
+                score += 5;
+            }
+            else
+            {
+                score += 3;
+            }
         }
-
-        shotCount = 1;
-
-        m_level1Pos = new Vector2(9.5f, 1f);
-        m_level2Pos = new Vector2(9.5f, -3.4f);
-
-        m_level1 = levels[numberLevel1];
-        m_level2 = levels[numberLevel2];
-
-        Instantiate(m_level1, m_level1Pos, Quaternion.identity);
-        Instantiate(m_level2, m_level2Pos, Quaternion.identity);
-
-        SetBlocksCount(min, max);
     }
 
     private void SpawnLevel()
@@ -112,7 +117,7 @@ public class GameController : MonoBehaviour
         }
         if (PlayerPrefs.GetInt("Level", 0) == 4)
         {
-            SpawnNewLevel(10, 25, 4, 7);
+            SpawnNewLevel(11, 25, 4, 7);
         }
 
         if (PlayerPrefs.GetInt("Level", 0) == 5)
@@ -131,6 +136,33 @@ public class GameController : MonoBehaviour
         }
     }
 
+    private void SpawnNewLevel(int numberLevel1, int numberLevel2, int min, int max)
+    {
+        if (shotCount > 1)
+        {
+            Camera.main.GetComponent<CameraTransitions>().RotateCameraToFront();
+        }
+
+        shotCount = 1;
+
+        m_level1Pos = new Vector2(9.5f, 1f);
+        m_level2Pos = new Vector2(9.5f, -3.4f);
+
+        m_level1 = levels[numberLevel1];
+        m_level2 = levels[numberLevel2];
+
+        if (m_level1 != null && m_level2 != null)
+        {
+            Instantiate(m_level1, m_level1Pos, Quaternion.identity);
+            Instantiate(m_level2, m_level2Pos, Quaternion.identity);
+        }
+        else
+        {
+            Debug.Log("null");
+        }
+        SetBlocksCount(min, max);
+    }
+
     private void SetBlocksCount(int min, int max)
     {
         blocks = GameObject.FindGameObjectsWithTag("Block");
@@ -141,36 +173,15 @@ public class GameController : MonoBehaviour
         }
     }
 
-    private void CheckBlocks()
-    {
-        blocks = GameObject.FindGameObjectsWithTag("Block");
 
-        if (blocks.Length < 1)
-        {
-            RemoveBalls();
-            PlayerPrefs.SetInt("Level", PlayerPrefs.GetInt("Level") + 1);
-            SpawnLevel();
-
-            if (firstShot)
-            {
-                score += 5;
-            }
-            else
-            {
-                score += 3;
-            }
-        }
-    }
-
-    private void RemoveBalls()
-    {
-        GameObject[] balls = GameObject.FindGameObjectsWithTag("Ball");
-
-        for (int i = 0; i < balls.Length; i++)
-        {
-            Destroy(balls[i]);
-        }
-    }
+    // private void RemoveBalls()
+    // {
+    //     balls = GameObject.FindGameObjectsWithTag("Ball");
+    //     for (int i = 0; i < balls.Length; i++)
+    //     {
+    //         Destroy(balls[i]);
+    //     }
+    // }
 
     public void CheckShotCount()
     {

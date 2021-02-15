@@ -12,8 +12,10 @@ public class ShootingScript : MonoBehaviour
     private int m_dots = 15;
 
     private Vector2 m_startPos;
+    Vector3 mousePosition;
 
-    private bool m_isShooting, m_isAiming;
+    private bool m_isAiming;
+    public bool m_isShooting = false;
 
     private GameObject m_shootingDots;
     public GameObject ballPrefab;
@@ -65,6 +67,10 @@ public class ShootingScript : MonoBehaviour
 
     private void Aim()
     {
+        if (m_isShooting)
+        {
+            return;
+        }
         if (Input.GetMouseButton(0))
         {
             if (!m_isAiming)
@@ -81,7 +87,7 @@ public class ShootingScript : MonoBehaviour
         else if (m_isAiming && !m_isShooting)
         {
             m_isAiming = false;
-
+            m_isShooting = true;
             StartCoroutine(ShootingCoroutine());
 
             HideDots();
@@ -143,28 +149,41 @@ public class ShootingScript : MonoBehaviour
 
     private void RotateDots()
     {
-        Vector2 direction = GameObject.Find("dot (1)").transform.position - transform.position;
-        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-        transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
+        if (m_isShooting)
+        {
+            return;
+        }
+        else
+        {
+            Vector2 direction = GameObject.Find("dot (1)").transform.position - transform.position;
+            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
+        }
+
     }
 
     private IEnumerator ShootingCoroutine()
     {
+        mousePosition = Input.mousePosition;
         for (int i = 0; i < m_gameController.ballsCount; i++)
         {
             yield return new WaitForSeconds(.1f);
             GameObject ball = Instantiate(ballPrefab, transform.position, Quaternion.identity);
             ball.name = "Ball";
             ball.transform.SetParent(ballsContainer.transform);
-            
-            m_theRB = ball.GetComponent<Rigidbody2D>();
-            m_theRB.AddForce(ShootForce(Input.mousePosition));
 
+            m_theRB = ball.GetComponent<Rigidbody2D>();
+
+            if (m_isShooting)
+            {
+                m_theRB.AddForce(ShootForce(mousePosition));
+            }
             m_gameController.ballsCountText.text = (m_gameController.ballsCount - i - 1).ToString();
         }
-        yield return new WaitForSeconds(.5f);
+        yield return new WaitForSeconds(.3f);
 
         m_gameController.shotCount++;
         m_gameController.ballsCountText.text = m_gameController.ballsCount.ToString();
+        m_isShooting = false;
     }
 }
